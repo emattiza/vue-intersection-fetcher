@@ -1,11 +1,14 @@
 <script setup lang="ts">
-import { defineComponent, ref } from 'vue'
+import { ref } from 'vue'
 import { useQuery } from '@tanstack/vue-query'
 import { useIntersectionObserver } from '@vueuse/core'
 
 const props = defineProps({
   id: { type: Number, required: true }
 })
+const sleep = (delay) => {
+   return new Promise((resolve) => setTimeout(resolve, delay))
+}
 const { id } = props
 const target = ref(null)
 const targetIsVisible = ref(false)
@@ -13,21 +16,25 @@ const targetIsVisible = ref(false)
 useIntersectionObserver(
   target,
   ([{ isIntersecting }], _observerElement) => {
-    targetIsVisible.value = isIntersecting
+    if (!targetIsVisible.value) {
+      targetIsVisible.value = isIntersecting
+    }
   },
 )
 const url = `https://dummyjson.com/todos/${id}`
-const { data, error, isFetching, isPending } = useQuery({
+const { data, error, isFetching, isPending, isFetched } = useQuery({
   queryKey: ['todo', id],
   async queryFn() {
+    await sleep(3000)
     return await fetch(url).then(
       (response) => response.json(),
     )
   },
-  enabled: targetIsVisible.value
+  enabled: targetIsVisible
 })
 </script>
 <template>
+  {{ targetIsVisible }}
   <div ref="target" class="wrapper">
     <template v-if="isPending">Loading...</template>
     <template v-else-if="error">

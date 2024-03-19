@@ -4,6 +4,5 @@ dist
 dist-ssr
 *.local
 
-package-lock.json
 yarn.lock
 pnpm-lock.yaml

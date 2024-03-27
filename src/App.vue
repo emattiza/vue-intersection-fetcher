@@ -1,22 +1,39 @@
 <script setup lang="ts">
-import { defineComponent } from 'vue'
-import { useQueryClient } from '@tanstack/vue-query'
+import { useQuery } from '@tanstack/vue-query'
 import { VueQueryDevtools } from '@tanstack/vue-query-devtools'
-import Todo from './Todo.vue'
+import RemoteItem from './RemoteItem.vue'
+import { type WhoaResponse } from './types/whoa'
 
-const queryClient = useQueryClient()
-const refetch = () => {
-  queryClient.invalidateQueries(["todos"])
-}
+
+const useWhoaApi = () => useQuery<WhoaResponse, any>({
+  queryKey: ["whoa", 0],
+  queryFn: async () => {
+    const response = await fetch("https://whoa.onrender.com/whoas/ordered/0")
+    const whoa = await response.json()
+    if (Math.random() < .05) {
+      throw Error("Not so fast!")
+    } else {
+      return whoa
+    }
+  }
+})
+
 </script>
 
 <template>
-  <div>
-    <button @click="refetch">Refetch all</button>
-  </div>
-  <hr />
-  <template v-for="id in 10">
-    <Todo :id="id" />
-  </template>
+  <RemoteItem :queryHook="useWhoaApi">
+    <template #default="{ data }">
+      <a href="#"><img :src="data.poster" width="240px" /></a>
+      <video controls>
+        <source :src="data.video['360p']" />
+      </video>
+    </template>
+    <template #error="{ error }">
+      <div>{{ error }}</div>
+    </template>
+    <template #loading>
+      <div>Loading...</div>
+    </template>
+  </RemoteItem>
   <VueQueryDevtools />
 </template>
